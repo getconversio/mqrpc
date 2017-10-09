@@ -1,0 +1,42 @@
+{
+  "name": "mqrpc",
+  "version": "1.0.0",
+  "description": "Easy RPC over RabbitMQ",
+  "keywords": ["rpc", "amqp", "amqplib", "RabbitMQ", "MQ", "asynchronous"],
+  "main": "./dist/lib/index.js",
+  "repository": "https://github.com/getconversio/mqrpc",
+  "author": "João Ferreira",
+  "license": "MIT",
+  "private": false,
+  "engines": {
+    "node": ">= 7.0.0"
+  },
+  "dependencies": {
+    "amqplib": "^0.5.1",
+    "loglevel": "^1.5.0",
+    "uuid": "^3.1.0"
+  },
+  "devDependencies": {
+    "@types/amqplib": "^0.5.4",
+    "@types/bluebird": "^3.5.14",
+    "@types/loglevel": "^1.5.1",
+    "@types/sinon": "^2.3.5",
+    "@types/uuid": "^3.4.2",
+    "ava": "^0.22.0",
+    "should": "^13.1.0",
+    "sinon": "^4.0.1",
+    "tslint": "^5.7.0",
+    "typescript": "^2.5.3"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "tsc && ava",
+    "dev": "tsc -w & ava -w",
+    "clean": "rm -r dist/ && mkdir dist"
+  },
+  "ava": {
+    "files": [
+      "dist/test/**/*.js"
+    ]
+  }
+}
