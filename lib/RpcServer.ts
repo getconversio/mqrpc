@@ -4,11 +4,11 @@ import log from './logger'
 import { RpcServerError, NoSuchOperation, ProcedureFailed, InvalidCall } from './RpcServer/errors'
 import * as comms from './RpcServer/comms'
 
-interface RpcOptions {
+export interface RpcOptions {
   rpcExchangeName?: string
 }
 
-interface RpcServerOptions {
+export interface RpcServerOptions {
   amqpClient: AmqpClientOptions
   rpcServer?: RpcOptions
 }

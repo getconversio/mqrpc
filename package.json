@@ -4,6 +4,7 @@
   "description": "Easy RPC over RabbitMQ",
   "keywords": ["rpc", "amqp", "amqplib", "RabbitMQ", "MQ", "asynchronous"],
   "main": "./dist/lib/index.js",
+  "types": "./dist/lib/index.d.ts",
   "repository": "https://github.com/getconversio/mqrpc",
   "author": "João Ferreira",
   "license": "MIT",
@@ -29,7 +30,7 @@
     "typescript": "^2.5.3"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc --declaration",
     "test": "tsc && ava",
     "dev": "tsc -w & ava -w",
     "clean": "rm -r dist/ && mkdir dist"

@@ -7,11 +7,11 @@ import { RpcServerError } from './errors'
  * Publishes a message back to the client according to the given replyTo and
  * correlationId as passed in the original message props.
  *
- * @param {Channel}  channel      The Amqp channel to use.
- * @param {Object}   messageProps The `properties` key of the client's message.
- * @param {Object}   response     The object to publish as a response.
+ * @param {Channel} channel      The Amqp channel to use.
+ * @param {object}  messageProps The `properties` key of the client's message.
+ * @param {object}  response     The object to publish as a response.
  */
-const sendMessage = async (channel: Channel, { replyTo, correlationId }: any, response: Object) => {
+const sendMessage = async (channel: Channel, { replyTo, correlationId }: any, response: object) => {
   await channel.publish(
     '',
     replyTo,

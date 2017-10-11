@@ -9,11 +9,11 @@ interface PromiseCallbacks {
   reject: Function
 }
 
-interface RpcOptions {
+export interface RpcOptions {
   rpcExchangeName?: string
 }
 
-interface RpcClientOptions {
+export interface RpcClientOptions {
   amqpClient: AmqpClientOptions
   rpcClient?: RpcOptions
 }
@@ -72,8 +72,8 @@ const makePromise = (): [Promise<any>, PromiseCallbacks] => {
 }
 
 export default class RpcClient {
+  private calls: Map<string, PromiseCallbacks>
   amqpClient: AmqpClient
-  calls: Map<string, PromiseCallbacks>
   rpcExchangeName: string
 
   constructor(opts: RpcClientOptions) {
