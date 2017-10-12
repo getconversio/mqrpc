@@ -1,5 +1,11 @@
 import { SerializedError } from '../RpcServer/errors'
 
+export class TimeoutExpired extends Error {
+  constructor(timeoutName: string, timeoutLength: number) {
+    super(`${timeoutName} expired after ${timeoutLength}ms`)
+  }
+}
+
 export class UnparseableContent extends Error {
   constructor(content: any) {
     super(`Received unparseable reply from server: ${content}`)
@@ -27,5 +33,11 @@ export class ProcedureFailed extends Error {
   constructor(cause: SerializedError) {
     super(`Remote procedure failed with error - ${cause.name}: ${cause.message}`)
     this.causeStack = cause && cause.stack
+  }
+}
+
+export class CallTerminated extends Error {
+  constructor() {
+    super('Call terminated upon client shutdown')
   }
 }

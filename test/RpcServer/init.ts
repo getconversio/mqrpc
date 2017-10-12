@@ -22,21 +22,21 @@ test.afterEach(async t => {
   ])
 })
 
-test('[Unit] #init instances an AmqpClient', async t => {
+test('[unit] #init instances an AmqpClient', async t => {
   t.context.server = new RpcServer({ amqpClient: { amqpUrl: AMQP_URL } })
   await t.context.server.init()
 
   t.true(t.context.server.amqpClient instanceof AmqpClient)
 })
 
-test.serial('[Unit] #init asserts the client\'s exchange', async t => {
+test.serial('[unit] #init asserts the client\'s exchange', async t => {
   t.context.server = new RpcServer({ amqpClient: { amqpUrl: AMQP_URL } })
   await t.context.server.init()
 
   t.notThrows(() => amqpClient.channel.checkExchange(t.context.server.rpcExchangeName))
 })
 
-test.serial('[Unit] #init asserts the call queue and binds it to the exchange', async t => {
+test.serial('[unit] #init asserts the call queue and binds it to the exchange', async t => {
   const channel = await amqpClient.connection.createChannel()
   let bindSpy = t.context.sandbox.spy(channel, 'bindQueue') // There's no way to check if the queue is bound
   t.context.sandbox.stub(amqpClient.connection, 'createChannel').resolves(channel)
@@ -49,7 +49,7 @@ test.serial('[Unit] #init asserts the call queue and binds it to the exchange', 
   sinon.assert.calledWith(bindSpy, 'mqrpc.call', 'mqrpc', 'call')
 })
 
-test.serial('[Unit] #init changes queue & exchange namespaces as configured', async t => {
+test.serial('[unit] #init changes queue & exchange namespaces as configured', async t => {
   const channel = await amqpClient.connection.createChannel()
   let bindSpy = t.context.sandbox.spy(channel, 'bindQueue') // There's no way to check if the queue is bound
   t.context.sandbox.stub(amqpClient.connection, 'createChannel').resolves(channel)
@@ -66,7 +66,7 @@ test.serial('[Unit] #init changes queue & exchange namespaces as configured', as
   sinon.assert.calledWith(bindSpy, 'conversio.mqrpc.call', 'conversio.mqrpc', 'call')
 })
 
-test.serial('[Unit] #init starts listening for calls', async t => {
+test.serial('[unit] #init starts listening for calls', async t => {
   const channel = await amqpClient.connection.createChannel()
   let consumeSpy = t.context.sandbox.spy(channel, 'consume')
 

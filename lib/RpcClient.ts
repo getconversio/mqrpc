@@ -2,15 +2,15 @@ import * as uuid from 'uuid/v4'
 import * as amqp from 'amqplib'
 import log from './logger'
 import AmqpClient, { AmqpClientOptions } from './AmqpClient'
-import { UnparseableContent, UnknownReply, ProcedureFailed, ServerError } from './RpcClient/errors'
-
-interface PromiseCallbacks {
-  resolve: Function
-  reject: Function
-}
+import { UnparseableContent, UnknownReply, ProcedureFailed, ServerError, CallTerminated } from './RpcClient/errors'
+import { newPromiseAndCallbacks, PromiseCallbacks } from './RpcClient/promises'
+import { default as CallTimer } from './RpcClient/CallTimer'
 
 export interface RpcOptions {
   rpcExchangeName?: string
+  ackTimeout?: number
+  idleTimeout?: number
+  callTimeout?: number
 }
 
 export interface RpcClientOptions {
@@ -24,7 +24,7 @@ const deserializeServerError = (obj: any): Error => {
 }
 
 const replyHandler = (calls: Map<string, PromiseCallbacks>) => {
-  return function(message: amqp.Message) {
+  return (message: amqp.Message) => {
     const callbacks = calls.get(message.properties.correlationId);
 
     if (!callbacks) {
@@ -49,37 +49,28 @@ const replyHandler = (calls: Map<string, PromiseCallbacks>) => {
   }
 }
 
-/**
- * @private
- *
- * Helper to return a Promise and its callbacks.
- */
-const makePromise = (): [Promise<any>, PromiseCallbacks] => {
-  // the noop business is because TypeScript doesn't know the callback is
-  // invoked immediately, and the error-disabling comment isn't available in
-  // 2.5.0
-  const noop = () => {}
-
-  let resolve: Function = noop
-  let reject: Function = noop
-
-  const promise = new Promise((res, rej) => {
-    resolve = res
-    reject = rej
-  })
-
-  return [promise, { resolve, reject }]
-}
-
 export default class RpcClient {
-  private calls: Map<string, PromiseCallbacks>
+  protected calls: Map<string, PromiseCallbacks>
+  protected callTimer: CallTimer
+
   amqpClient: AmqpClient
-  rpcExchangeName: string
+  rpcExchangeName = 'mqrpc'
+  ackTimeout = 0
+  idleTimeout = 5000
+  callTimeout = 0
 
   constructor(opts: RpcClientOptions) {
     this.amqpClient = new AmqpClient(opts.amqpClient)
     this.calls = new Map()
-    this.rpcExchangeName = opts.rpcClient && opts.rpcClient.rpcExchangeName || 'mqrpc'
+
+    if (opts.rpcClient) {
+      if (opts.rpcClient.rpcExchangeName) this.rpcExchangeName = opts.rpcClient.rpcExchangeName
+      if (opts.rpcClient.ackTimeout) this.ackTimeout = opts.rpcClient.ackTimeout
+      if (opts.rpcClient.idleTimeout) this.idleTimeout = opts.rpcClient.idleTimeout
+      if (opts.rpcClient.callTimeout) this.callTimeout = opts.rpcClient.callTimeout
+    }
+
+    this.callTimer = new CallTimer(this.ackTimeout, this.idleTimeout, this.callTimeout)
   }
 
   /**
@@ -102,21 +93,23 @@ export default class RpcClient {
    */
   async term() {
     await this.amqpClient.term()
-    this.calls.clear();
+    this.callTimer.clearAllTimeouts()
+    this.calls.forEach(({ reject }) => reject(new CallTerminated()))
+    this.calls.clear()
   }
 
   /**
    * Calls the remote procedure with the given `procedure` and resolves its
    * return, or rejects with errors.
    *
-   * This will wait for a reply indefinitely.
+   * This will wait for a reply until the first timeout expires.
    *
    * @param  {string}       procedure The procedure's name.
    * @param  {any[]}        ...args   The args for the procedure.
    * @return {Promise<any>}           Whatever the procedure returns.
    */
   async call(procedure: string, ...args: any[]) {
-    const [callPromise, callPromiseCallbacks] = makePromise();
+    const [callPromise, callPromiseCallbacks] = newPromiseAndCallbacks();
     const correlationId = uuid()
 
     this.calls.set(correlationId, callPromiseCallbacks)
@@ -129,6 +122,13 @@ export default class RpcClient {
       { replyTo: 'amq.rabbitmq.reply-to', correlationId }
     )
 
-    return await callPromise
+    try {
+      return await Promise.race([
+        callPromise,
+        this.callTimer.startCallTimeouts(correlationId)
+      ])
+    } finally {
+      this.callTimer.clearCallTimeouts(correlationId)
+    }
   }
 }

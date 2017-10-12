@@ -3,6 +3,7 @@ import * as uuid from 'uuid/v4'
 import * as amqp from 'amqplib'
 import * as sinon from 'sinon'
 import { AMQP_URL } from './_config'
+import { delay } from './_utils'
 import RpcServer from '../lib/RpcServer'
 import RpcClient from '../lib/RpcClient'
 import * as clientErrors from '../lib/RpcClient/errors'
@@ -19,7 +20,7 @@ test.after.always(async () => {
 
 test.beforeEach(async t => {
   const rpcExchangeName = `mqrpc.${uuid()}` // make sure each call goes to the right server
-  t.context.client = new RpcClient({ amqpClient: { connection }, rpcClient: { rpcExchangeName } })
+  t.context.client = new RpcClient({ amqpClient: { connection }, rpcClient: { rpcExchangeName, idleTimeout: 50 } })
   t.context.server = new RpcServer({ amqpClient: { connection }, rpcServer: { rpcExchangeName } })
 
   await t.context.server.init()
@@ -52,3 +53,20 @@ test('[integration] works nicely with no arguments and no returns', async t => {
   t.context.server.register('noop', () => {})
   t.is(await t.context.client.call('noop'), undefined)
 })
+
+test('[integration] clears call timeouts on resoluction and rejection', async t => {
+  const resolves = t.context.client.call('mqrpc.echo', 42)
+  const rejects = t.context.client.call('doesnt.exist')
+
+  const unhandledListener = err => t.fail(`Uncaught Error: ${err.message}`)
+  process.on('unhandledRejection', unhandledListener)
+
+  await t.notThrows(resolves)
+  await t.throws(rejects, clientErrors.ServerError)
+
+  await delay(50)
+
+  process.removeListener('unhandledRejection', unhandledListener)
+
+  t.pass()
+});
