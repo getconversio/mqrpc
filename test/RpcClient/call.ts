@@ -3,12 +3,12 @@ import * as sinon from 'sinon'
 import { delay } from '../_utils'
 import { AMQP_URL } from '../_config'
 import RpcClient from '../../lib/RpcClient'
-import { TimeoutExpired } from '../../lib/RpcClient/errors'
+import { TimeoutExpired } from '../../lib/Timer'
 
 test.beforeEach(async t => {
   t.context.client = new RpcClient({
     amqpClient: { amqpUrl: AMQP_URL },
-    rpcClient: { idleTimeout: 25 }
+    rpcClient: { callTimeout: 25 }
   })
 
   await t.context.client.init()
@@ -50,11 +50,11 @@ test('[unit] #call rejects on an expired timeout', async t => {
 
   await delay(25)
 
-  await t.throws(promise, TimeoutExpired, 'idleTimeout expired after 25ms')
+  await t.throws(promise, TimeoutExpired, 'callTimeout expired after 25ms')
 })
 
 test('[unit] #call clears all call timeouts on reject', async t => {
-  const spy = t.context.sandbox.spy(t.context.client.callTimer, 'clearCallTimeouts')
+  const spy = t.context.sandbox.spy(t.context.client.callTimer, 'addTimeouts')
   t.context.client.call('marco').catch(err => { /* timeout */ })
 
   await delay(30)

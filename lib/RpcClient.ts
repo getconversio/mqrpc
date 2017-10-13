@@ -3,8 +3,8 @@ import * as amqp from 'amqplib'
 import log from './logger'
 import AmqpClient, { AmqpClientOptions } from './AmqpClient'
 import { UnparseableContent, UnknownReply, ProcedureFailed, ServerError, CallTerminated } from './RpcClient/errors'
-import { newPromiseAndCallbacks, PromiseCallbacks } from './RpcClient/promises'
-import { default as CallTimer } from './RpcClient/CallTimer'
+import { newPromiseAndCallbacks, PromiseCallbacks } from './promises'
+import { default as Timer, Timeout } from './Timer'
 
 export interface RpcOptions {
   rpcExchangeName?: string
@@ -51,7 +51,7 @@ const replyHandler = (calls: Map<string, PromiseCallbacks>) => {
 
 export default class RpcClient {
   protected calls: Map<string, PromiseCallbacks>
-  protected callTimer: CallTimer
+  protected callTimer: Timer
 
   amqpClient: AmqpClient
   rpcExchangeName = 'mqrpc'
@@ -70,7 +70,7 @@ export default class RpcClient {
       if (opts.rpcClient.callTimeout) this.callTimeout = opts.rpcClient.callTimeout
     }
 
-    this.callTimer = new CallTimer(this.ackTimeout, this.idleTimeout, this.callTimeout)
+    this.callTimer = new Timer()
   }
 
   /**
@@ -93,7 +93,7 @@ export default class RpcClient {
    */
   async term() {
     await this.amqpClient.term()
-    this.callTimer.clearAllTimeouts()
+    this.callTimer.clear()
     this.calls.forEach(({ reject }) => reject(new CallTerminated()))
     this.calls.clear()
   }
@@ -125,10 +125,17 @@ export default class RpcClient {
     try {
       return await Promise.race([
         callPromise,
-        this.callTimer.startCallTimeouts(correlationId)
+        this.callTimer.addTimeouts(correlationId, ...this.callTimeouts())
       ])
     } finally {
-      this.callTimer.clearCallTimeouts(correlationId)
+      this.callTimer.remove(correlationId)
     }
+  }
+
+  protected callTimeouts(): Timeout[] {
+    const timeouts: Timeout[] = []
+    if (this.ackTimeout) timeouts.push({ id: 'ackTimeout', length: this.ackTimeout })
+    if (this.callTimeout) timeouts.push({ id: 'callTimeout', length: this.callTimeout })
+    return timeouts
   }
 }

@@ -1,11 +1,5 @@
 import { SerializedError } from '../RpcServer/errors'
 
-export class TimeoutExpired extends Error {
-  constructor(timeoutName: string, timeoutLength: number) {
-    super(`${timeoutName} expired after ${timeoutLength}ms`)
-  }
-}
-
 export class UnparseableContent extends Error {
   constructor(content: any) {
     super(`Received unparseable reply from server: ${content}`)

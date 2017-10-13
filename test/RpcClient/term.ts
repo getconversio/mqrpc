@@ -41,7 +41,7 @@ test('[unit] #term rejects all pending calls', async t => {
 })
 
 test('[unit] #term clears all call timeouts', async t => {
-  const spy = t.context.sandbox.spy(t.context.client.callTimer, 'clearAllTimeouts')
+  const spy = t.context.sandbox.spy(t.context.client.callTimer, 'clear')
 
   await t.context.client.term()
 
