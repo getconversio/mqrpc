@@ -7,6 +7,7 @@ import { delay } from './_utils'
 import RpcServer from '../lib/RpcServer'
 import RpcClient from '../lib/RpcClient'
 import * as clientErrors from '../lib/RpcClient/errors'
+import { TimeoutExpired } from '../lib/Timer'
 
 let connection: amqp.Connection;
 
@@ -54,15 +55,16 @@ test('[integration] works nicely with no arguments and no returns', async t => {
   t.is(await t.context.client.call('noop'), undefined)
 })
 
-test('[integration] clears call timeouts on resoluction and rejection', async t => {
+test('[integration] clears call timeouts on resolution and rejection', async t => {
   const resolves = t.context.client.call('mqrpc.echo', 42)
   const rejects = t.context.client.call('doesnt.exist')
+  const errorMsg = 'Server Error - NoSuchOperation: No operation named "doesnt.exist" has been registered'
 
   const unhandledListener = err => t.fail(`Uncaught Error: ${err.message}`)
   process.on('unhandledRejection', unhandledListener)
 
   await t.notThrows(resolves)
-  await t.throws(rejects, clientErrors.ServerError)
+  await t.throws(rejects, clientErrors.ServerError, errorMsg)
 
   await delay(50)
 
@@ -70,3 +72,26 @@ test('[integration] clears call timeouts on resoluction and rejection', async t 
 
   t.pass()
 });
+
+test('[integration] a slow call still works with well configured timeouts', async t => {
+  t.context.server.register('mqrpc.slow', () => delay(100).then(() => 42))
+
+  t.context.client.idleTimeout = 50
+  t.context.client.ackTimeout = 75
+  t.context.client.callTimeout = 200
+
+  t.is(await t.context.client.call('mqrpc.slow'), 42)
+})
+
+test('[integration] a slow call fails with a short callTimeout', async t => {
+  t.context.server.register('mqrpc.slow', () => delay(100).then(() => 42))
+  t.context.client.callTimeout = 50
+
+  await t.throws(
+    t.context.client.call('mqrpc.slow'),
+    TimeoutExpired,
+    'callTimeout expired after 50ms'
+  )
+
+  await delay(100) // dont close channel yet (server will still reply)
+})

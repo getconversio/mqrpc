@@ -4,7 +4,7 @@ import { Message } from 'amqplib'
 import { AMQP_URL } from '../../_config'
 import AmqpClient from '../../../lib/AmqpClient'
 import { reply } from '../../../lib/RpcServer/comms'
-import { NoSuchOperation, ProcedureFailed } from '../../../lib/RpcServer/errors'
+import { NoSuchProcedure, ProcedureFailed } from '../../../lib/RpcServer/errors'
 
 const sampleMessage = (<Message>{
   fields: { deliveryTag: 1234567890987654321 },
@@ -16,13 +16,10 @@ let amqpClient = new AmqpClient({ amqpUrl: AMQP_URL })
 test.before(() => amqpClient.init())
 test.after.always(() => amqpClient.term())
 
-test.beforeEach(t => {
-  t.context.sandbox = sinon.sandbox.create()
-})
+test.beforeEach(t => t.context.sandbox = sinon.sandbox.create())
+test.afterEach.always(t => t.context.sandbox.restore())
 
-test.afterEach(t => t.context.sandbox.restore())
-
-test.serial('[unit] acks the given message', async t => {
+test.serial('[unit] #reply acks the given message', async t => {
   const spy = t.context.sandbox.spy(amqpClient.channel, 'ack')
 
   await reply(amqpClient.channel, sampleMessage)
@@ -31,7 +28,7 @@ test.serial('[unit] acks the given message', async t => {
   t.pass()
 })
 
-test.serial('[unit] publishes to the given replyTo with the given correlationId', async t => {
+test.serial('[unit] #reply publishes to the given replyTo with the given correlationId', async t => {
   const spy = t.context.sandbox.spy(amqpClient.channel, 'publish')
 
   await reply(amqpClient.channel, sampleMessage)
@@ -42,8 +39,8 @@ test.serial('[unit] publishes to the given replyTo with the given correlationId'
   t.pass()
 })
 
-test.serial('[unit] serializes the response as JSON', async t => {
-  t.plan(4)
+test.serial('[unit] #reply serializes the response as JSON', async t => {
+  t.plan(5)
 
   const spy = t.context.sandbox.spy(amqpClient.channel, 'publish')
   await reply(amqpClient.channel, sampleMessage, { meaning: 42 })
@@ -53,8 +50,9 @@ test.serial('[unit] serializes the response as JSON', async t => {
 
     const json = JSON.parse(content.toString())
 
-    t.truthy(json.res)
-    t.deepEqual(json.res, { meaning: 42 })
+    t.is(json.type, 'reply')
+    t.truthy(json.reply)
+    t.deepEqual(json.reply, { meaning: 42 })
     t.is(json.error, undefined)
 
     return true
@@ -65,7 +63,7 @@ test.serial('[unit] serializes the response as JSON', async t => {
   )
 })
 
-test.serial('[unit] handles undefined responses', async t => {
+test.serial('[unit] #reply handles undefined responses', async t => {
   const spy = t.context.sandbox.spy(amqpClient.channel, 'publish')
   await reply(amqpClient.channel, sampleMessage)
 
@@ -76,13 +74,13 @@ test.serial('[unit] handles undefined responses', async t => {
   t.pass()
 })
 
-test.serial('[unit] handles null responses', async t => {
+test.serial('[unit] #reply handles null responses', async t => {
   t.plan(1)
   const spy = t.context.sandbox.spy(amqpClient.channel, 'publish')
   await reply(amqpClient.channel, sampleMessage, null)
 
   const contentMatcher = sinon.match((content: Buffer) => {
-    t.is(JSON.parse(content.toString()).res, null)
+    t.is(JSON.parse(content.toString()).reply, null)
     return true
   })
 
@@ -91,20 +89,21 @@ test.serial('[unit] handles null responses', async t => {
   )
 })
 
-test.serial('[unit] sends error responses under an error key', async t => {
-  t.plan(3)
+test.serial('[unit] #reply sends error responses under an error key', async t => {
+  t.plan(4)
 
   const spy = t.context.sandbox.spy(amqpClient.channel, 'publish')
-  await reply(amqpClient.channel, sampleMessage, new NoSuchOperation('oops'))
+  await reply(amqpClient.channel, sampleMessage, new NoSuchProcedure('oops'))
 
   const contentMatcher = sinon.match((content: Buffer) => {
     const json = JSON.parse(content.toString())
 
-    t.is(json.res, undefined)
+    t.is(json.reply, undefined)
+    t.is(json.type, 'error')
     t.truthy(json.error)
     t.deepEqual(
       json.error,
-      { name: 'NoSuchOperation', message: 'No operation named "oops" has been registered' }
+      { name: 'NoSuchProcedure', message: 'No procedure named "oops" has been registered' }
     )
 
     return true
@@ -115,8 +114,8 @@ test.serial('[unit] sends error responses under an error key', async t => {
   )
 })
 
-test.serial('[unit] serializes errors according to their own implementation', async t => {
-  t.plan(3)
+test.serial('[unit] #reply serializes errors according to their own implementation', async t => {
+  t.plan(4)
 
   const spy = t.context.sandbox.spy(amqpClient.channel, 'publish')
   const error = new Error('oops')
@@ -125,7 +124,8 @@ test.serial('[unit] serializes errors according to their own implementation', as
   const contentMatcher = sinon.match((content: Buffer) => {
     const json = JSON.parse(content.toString())
 
-    t.is(json.res, undefined)
+    t.is(json.reply, undefined)
+    t.is(json.type, 'error')
     t.truthy(json.error)
     t.deepEqual(
       json.error,

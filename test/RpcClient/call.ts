@@ -29,12 +29,13 @@ test.afterEach(t => {
 //
 // @see test/clientServerInteraction.ts
 
-test('[unit] publishes the procedure call', async t => {
+test('[unit] #call publishes the procedure call', async t => {
   t.context.client.call('marco', 'polo', 42).catch(err => { /* call-term */ })
 
   await delay(1) // let the publish happen
 
-  const payload = JSON.stringify({ procedure: 'marco', args: ['polo', 42] })
+  const timeouts = { idleTimeout: 60000, callTimeout: 25 }
+  const payload = JSON.stringify({ procedure: 'marco', args: ['polo', 42], timeouts })
   sinon.assert.calledWith(
     t.context.publishStub,
     'mqrpc',

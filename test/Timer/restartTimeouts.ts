@@ -33,7 +33,7 @@ test('[unit] #restartTimeouts restarts the given timeout', async t => {
 })
 
 test('[unit] #restartTimeouts does not affect other timeouts', async t => {
-  t.plan(3)
+  t.plan(2)
 
   const start = Date.now()
   const promise = t.context.timer.addTimeouts('an-id', timeout, { id: 'slowTo', length: 30 })
@@ -45,6 +45,5 @@ test('[unit] #restartTimeouts does not affect other timeouts', async t => {
   await promise.catch(err => {
     t.regex(err.message, /slowTo.*30/)
     t.true(Date.now() >= start + 30)
-    t.false(Date.now() >= start + 40)
   })
 })

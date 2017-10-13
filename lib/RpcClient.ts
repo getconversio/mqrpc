@@ -1,6 +1,7 @@
 import * as uuid from 'uuid/v4'
 import * as amqp from 'amqplib'
 import log from './logger'
+import { ServerPayload, ClientPayload, TimeoutDesc } from './common'
 import AmqpClient, { AmqpClientOptions } from './AmqpClient'
 import { UnparseableContent, UnknownReply, ProcedureFailed, ServerError, CallTerminated } from './RpcClient/errors'
 import { newPromiseAndCallbacks, PromiseCallbacks } from './promises'
@@ -23,32 +24,6 @@ const deserializeServerError = (obj: any): Error => {
   return new ServerError(obj)
 }
 
-const replyHandler = (calls: Map<string, PromiseCallbacks>) => {
-  return (message: amqp.Message) => {
-    const callbacks = calls.get(message.properties.correlationId);
-
-    if (!callbacks) {
-      return log.warn(
-        '[RpcClient] Received reply to unknown call.',
-        { correlationId: message.properties.correlationId }
-      );
-    }
-
-    let content;
-
-    try {
-      content = JSON.parse(message.content.toString())
-    } catch (err) {
-      return callbacks.reject(new UnparseableContent(message.content))
-    }
-
-    if (content.error) return callbacks.reject(deserializeServerError(content.error))
-    if (content.res || Object.keys(content).length === 0) return callbacks.resolve(content.res)
-
-    callbacks.reject(new UnknownReply(content))
-  }
-}
-
 export default class RpcClient {
   protected calls: Map<string, PromiseCallbacks>
   protected callTimer: Timer
@@ -56,7 +31,7 @@ export default class RpcClient {
   amqpClient: AmqpClient
   rpcExchangeName = 'mqrpc'
   ackTimeout = 0
-  idleTimeout = 5000
+  idleTimeout = 60000 // 1 minute
   callTimeout = 0
 
   constructor(opts: RpcClientOptions) {
@@ -82,7 +57,7 @@ export default class RpcClient {
     await this.amqpClient.init()
     await this.amqpClient.channel.consume(
       'amq.rabbitmq.reply-to',
-      replyHandler(this.calls),
+      this.makeReplyHandler(),
       { noAck: true }
     )
   }
@@ -118,7 +93,7 @@ export default class RpcClient {
     await this.amqpClient.channel.publish(
       this.rpcExchangeName,
       'call',
-      new Buffer(JSON.stringify({ procedure, args })),
+      new Buffer(JSON.stringify(this.callPayload(procedure, ...args))),
       { replyTo: 'amq.rabbitmq.reply-to', correlationId }
     )
 
@@ -129,6 +104,7 @@ export default class RpcClient {
       ])
     } finally {
       this.callTimer.remove(correlationId)
+      this.calls.delete(correlationId)
     }
   }
 
@@ -137,5 +113,55 @@ export default class RpcClient {
     if (this.ackTimeout) timeouts.push({ id: 'ackTimeout', length: this.ackTimeout })
     if (this.callTimeout) timeouts.push({ id: 'callTimeout', length: this.callTimeout })
     return timeouts
+  }
+
+  protected callPayload(procedure: string, ...args: any[]): ClientPayload {
+    const timeouts: TimeoutDesc = {}
+    if (this.ackTimeout) timeouts.ackTimeout = this.ackTimeout
+    if (this.idleTimeout) timeouts.idleTimeout = this.idleTimeout
+    if (this.callTimeout) timeouts.callTimeout = this.callTimeout
+    return { procedure, args, timeouts }
+  }
+
+  protected makeReplyHandler(): (message: amqp.Message) => any {
+    return (message: amqp.Message) => {
+      const correlationId = message.properties.correlationId
+      const callbacks = this.calls.get(correlationId);
+
+      if (!callbacks) {
+        return log.warn(
+          '[RpcClient] Received reply to unknown call.',
+          { correlationId }
+        );
+      }
+
+      let content: ServerPayload
+
+      try {
+        content = JSON.parse(message.content.toString())
+      } catch (err) {
+        return callbacks.reject(new UnparseableContent(message.content))
+      }
+
+      switch (content.type) {
+        case 'ack':
+          this.callTimer.removeTimeouts(correlationId, 'ackTimeout')
+
+          if (this.idleTimeout) {
+            this.callTimer.addTimeouts(correlationId, { id: 'idleTimeout', length: this.idleTimeout })
+          }
+
+          break;
+        case 'wait':
+          this.callTimer.restartTimeouts(correlationId, 'idleTimeout')
+          break;
+        case 'error':
+          return callbacks.reject(deserializeServerError(content.error))
+        case 'reply':
+          return callbacks.resolve(content.reply)
+        default:
+          callbacks.reject(new UnknownReply(content))
+      }
+    }
   }
 }
