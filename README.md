@@ -99,7 +99,7 @@ Connects to RabbitMQ and starts listening for replies from servers.
 
 Calls the named `procedure` on an RpcServer with the given `args`. Resolves to whatever the procedure returns. Rejects if the procedure throws, or there is a connection error or an error in the server.
 
-##### `async server.term()`
+##### `async client.term()`
 
 Neatly shut down the client. Closes the AMQP channel and, if one wasn't provided, the connection as well.
 
