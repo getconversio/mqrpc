@@ -2,7 +2,14 @@
   "name": "mqrpc",
   "version": "1.0.0",
   "description": "Easy RPC over RabbitMQ",
-  "keywords": ["rpc", "amqp", "amqplib", "RabbitMQ", "MQ", "asynchronous"],
+  "keywords": [
+    "rpc",
+    "amqp",
+    "amqplib",
+    "RabbitMQ",
+    "MQ",
+    "asynchronous"
+  ],
   "main": "./dist/lib/index.js",
   "repository": "https://github.com/getconversio/mqrpc",
   "author": "João Ferreira",
