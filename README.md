@@ -99,18 +99,18 @@ Connects to RabbitMQ and starts listening for replies from servers.
 
 Calls the named `procedure` on an RpcServer with the given `args`. Resolves to whatever the procedure returns. Rejects if the procedure throws, or there is a connection error or an error in the server.
 
-##### `async server.term()`
-
-Neatly shut down the client. Closes the AMQP channel and, if one wasn't provided, the connection as well.
-
 ###### Errors
 
-The following error types may be thrown from `client.call`:
+The following error types may be thrown:
 
 * `ProcedureFailed`: The most common (hopefully), is thrown when the procedure itself throws. The remote error stack may be included in `error.causeStack`.
 * `ServerError`: When an error occurs in the server while processing the call. Eg: the requested procedure is not registered.
 * `UnparseableContent`: Whatever reply we got from a server could not be parsed.
 * `UnknownReply`: Reply was parseable, but the format isn't understood.
+
+##### `async server.term()`
+
+Neatly shut down the client. Closes the AMQP channel and, if one wasn't provided, the connection as well.
 
 ## Future Features
 

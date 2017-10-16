@@ -1,70 +1,31 @@
 import { Message, Channel } from 'amqplib'
 import AmqpClient, { AmqpClientOptions } from './AmqpClient'
 import log from './logger'
-import { RpcServerError, NoSuchOperation, ProcedureFailed, InvalidCall } from './RpcServer/errors'
+import { TimeoutDesc, ClientPayload } from './common'
+import { RpcServerError, NoSuchProcedure, ProcedureFailed, InvalidCall } from './RpcServer/errors'
 import * as comms from './RpcServer/comms'
 
-interface RpcOptions {
+export interface RpcOptions {
   rpcExchangeName?: string
 }
 
-interface RpcServerOptions {
+export interface RpcServerOptions {
   amqpClient: AmqpClientOptions
   rpcServer?: RpcOptions
-}
-
-const runCall = async (channel: Channel, procedures: Map<string, Function>, message: Message) => {
-  const nack = () => channel.nack(message, false, false);
-  let content;
-
-  if (!message.properties.replyTo || !message.properties.correlationId) {
-    log.warn(
-      '[RpcServer] Dropping received message with no replyTo or correlationId.',
-      { properties: message.properties }
-    )
-    return nack()
-  }
-
-  try {
-    content = JSON.parse(message.content.toString())
-  } catch (err) {
-    log.warn(
-      '[RpcServer] Dropping message that cannot be parsed as JSON',
-      { properties: message.properties, content: message.content }
-    )
-    return nack()
-  }
-
-  if (!content.procedure) {
-    return await comms.reply(channel, message, new InvalidCall('No `procedure` was provided'))
-  }
-
-  const fn = procedures.get(content.procedure)
-  if (!fn) return await comms.reply(channel, message, new NoSuchOperation(content.procedure))
-
-  log.info(`[RpcServer] Running procedure ${content.procedure}`)
-
-  let response;
-
-  try {
-    const args = content.args || []
-    response = await fn(...args)
-  } catch (err) {
-    response = new ProcedureFailed(err)
-  }
-
-  await comms.reply(channel, message, response)
 }
 
 export default class RpcServer {
   procedures: Map<string, Function>
   amqpClient: AmqpClient
-  rpcExchangeName: string
+  rpcExchangeName = 'mqrpc'
 
   constructor(opts: RpcServerOptions) {
     this.procedures = new Map()
     this.amqpClient = new AmqpClient(opts.amqpClient)
-    this.rpcExchangeName = opts.rpcServer && opts.rpcServer.rpcExchangeName || 'mqrpc'
+
+    if (opts.rpcServer && opts.rpcServer.rpcExchangeName) {
+      this.rpcExchangeName = opts.rpcServer.rpcExchangeName
+    }
   }
 
   async init() {
@@ -87,7 +48,39 @@ export default class RpcServer {
 
     await this.amqpClient.channel.consume(
       `${this.rpcExchangeName}.call`,
-      runCall.bind(null, this.amqpClient.channel, this.procedures)
+      async (message: Message) => {
+        let content: ClientPayload
+
+        try {
+          content = comms.extractCallContent(message)
+        } catch (err) {
+          log.error('[RpcServer] Got an invalid call', err, { message })
+          return this.amqpClient.channel.nack(message)
+        }
+
+        const heartbeatWrapper = comms.whileSendingHeartbeats(
+          this.amqpClient.channel, message, content.timeouts
+        )
+
+        try {
+          // TODO: if callTimeout is set, we should wait a max of that for the proc,
+          // since the client won't be there for the reply after that anyway
+          // FIXME: do not reply if the server has been `term`ed
+          const response = await heartbeatWrapper(
+            () => this.call(content.procedure, content.args || [])
+          )
+          await comms.reply(this.amqpClient.channel, message, response)
+        } catch (err) {
+          if (err instanceof RpcServerError) {
+            return await comms.reply(this.amqpClient.channel, message, err)
+          }
+
+          // Not an error on the procedure per se, but some unexpected error
+          // while processing the call. A 500, if you will.
+          log.error('[RpcServer] Error running call', err)
+          this.amqpClient.channel.nack(message)
+        }
+      }
     )
   }
 
@@ -101,5 +94,20 @@ export default class RpcServer {
 
   registerDebugProcedures() {
     this.register('mqrpc.echo', (arg: any) => arg)
+  }
+
+  protected async call(procedure: string, args: any[]): Promise<any> {
+    if (!procedure) throw new InvalidCall('No `procedure` was provided')
+
+    const proc = this.procedures.get(procedure)
+    if (!proc) throw new NoSuchProcedure(procedure)
+
+    log.info(`[RpcServer] Running procedure ${procedure}`)
+
+    try {
+      return await proc(...args)
+    } catch (err) {
+      throw new ProcedureFailed(err)
+    }
   }
 }

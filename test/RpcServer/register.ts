@@ -2,7 +2,7 @@ import test from 'ava'
 import * as sinon from 'sinon'
 import RpcServer from '../../lib/RpcServer'
 
-test('[Unit] #register registers a new operation', async t => {
+test('[unit] #register registers a new operation', async t => {
   const server = new RpcServer({ amqpClient: { amqpUrl: 'fake' } })
   const spy = sinon.spy()
 

@@ -25,9 +25,9 @@ export class RpcServerError extends Error {
   }
 }
 
-export class NoSuchOperation extends RpcServerError {
-  constructor(operation: string) {
-    super(`No operation named "${operation}" has been registered`)
+export class NoSuchProcedure extends RpcServerError {
+  constructor(procedure: string) {
+    super(`No procedure named "${procedure}" has been registered`)
   }
 }
 

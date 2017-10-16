@@ -8,12 +8,12 @@ test.beforeEach(async t => {
   await t.context.client.init()
 })
 
-test('[Unit] #term closes the channel', async t => {
+test('[unit] #term closes the channel', async t => {
   t.context.client.channel.on('close', () => t.pass())
   await t.context.client.term()
 })
 
-test('[Unit] #term closes the connection', async t => {
+test('[unit] #term closes the connection', async t => {
   t.context.client.connection.on('close', () => t.pass())
   await t.context.client.term()
 })

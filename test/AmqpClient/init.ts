@@ -8,12 +8,12 @@ test.afterEach(async t => {
   if (t.context.client) await t.context.client.term()
 })
 
-test('[Unit] #init fails when given neither a connection nor a URL', async t => {
+test('[unit] #init fails when given neither a connection nor a URL', async t => {
   const client = new AmqpClient({})
   await t.throws(client.init())
 })
 
-test('[Unit] #init connects to RabbitMQ when given a URL', async t => {
+test('[unit] #init connects to RabbitMQ when given a URL', async t => {
   t.context.client = new AmqpClient({ amqpUrl: AMQP_URL })
   await t.context.client.init()
 
@@ -21,7 +21,7 @@ test('[Unit] #init connects to RabbitMQ when given a URL', async t => {
   t.true(t.context.client.ownConnection)
 })
 
-test('[Unit] #init reuses a given connection', async t => {
+test('[unit] #init reuses a given connection', async t => {
   const connection = await amqp.connect(AMQP_URL)
   t.context.client = new AmqpClient({ connection })
 
@@ -30,7 +30,7 @@ test('[Unit] #init reuses a given connection', async t => {
   t.is(t.context.client.connection, connection)
 })
 
-test('[Unit] #init creates a channel', async t => {
+test('[unit] #init creates a channel', async t => {
   const connection = await amqp.connect(AMQP_URL)
   t.context.client = new AmqpClient({ connection })
 

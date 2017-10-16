@@ -29,3 +29,9 @@ export class ProcedureFailed extends Error {
     this.causeStack = cause && cause.stack
   }
 }
+
+export class CallTerminated extends Error {
+  constructor() {
+    super('Call terminated upon client shutdown')
+  }
+}
