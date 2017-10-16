@@ -108,7 +108,7 @@ The following error types may be thrown:
 * `UnparseableContent`: Whatever reply we got from a server could not be parsed.
 * `UnknownReply`: Reply was parseable, but the format isn't understood.
 
-##### `async server.term()`
+##### `async client.term()`
 
 Neatly shut down the client. Closes the AMQP channel and, if one wasn't provided, the connection as well.
 
