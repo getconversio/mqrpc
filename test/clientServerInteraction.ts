@@ -55,7 +55,7 @@ test('[integration] works nicely with no arguments and no returns', async t => {
   t.is(await t.context.client.call('noop'), undefined)
 })
 
-test('[integration] clears call timeouts on resolution and rejection', async t => {
+test.serial('[integration] clears call timeouts on resolution and rejection', async t => {
   const resolves = t.context.client.call('mqrpc.echo', 42)
   const rejects = t.context.client.call('doesnt.exist')
   const errorMsg = 'Server Error - NoSuchOperation: No operation named "doesnt.exist" has been registered'
@@ -74,11 +74,12 @@ test('[integration] clears call timeouts on resolution and rejection', async t =
 });
 
 test('[integration] a slow call still works with well configured timeouts', async t => {
-  t.context.server.register('mqrpc.slow', () => delay(100).then(() => 42))
+  t.context.server.register('mqrpc.slow', () => delay(200).then(() => 42))
 
-  t.context.client.idleTimeout = 50
-  t.context.client.ackTimeout = 75
-  t.context.client.callTimeout = 200
+  // works fine locally with smaller numbers, but not over the wire in CI
+  t.context.client.idleTimeout = 150
+  t.context.client.ackTimeout = 250
+  t.context.client.callTimeout = 500
 
   t.is(await t.context.client.call('mqrpc.slow'), 42)
 })
