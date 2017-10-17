@@ -21,7 +21,7 @@ test('[unit] #addTimeouts rejects with an expired timeout', t => {
 })
 
 test('[unit] #addTimeouts rejects with the first, when multiple are set', t => {
-  t.plan(3)
+  t.plan(2)
 
   const start = Date.now()
   const tFast = { id: 'fastTo', length: 25 }
@@ -31,7 +31,6 @@ test('[unit] #addTimeouts rejects with the first, when multiple are set', t => {
     .catch(err => {
       t.regex(err.message, /fastTo.*25/)
       t.true(Date.now() >= start + 25)
-      t.false(Date.now() >= start + 50)
     })
 })
 
