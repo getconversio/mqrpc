@@ -1,7 +1,7 @@
 import * as uuid from 'uuid/v4'
 import * as amqp from 'amqplib'
-import log from './logger'
-import { ServerPayload, ClientPayload, TimeoutDesc } from './common'
+import logger from './logger'
+import { ServerPayload, ClientPayload, TimeoutDesc, StandardLogger } from './common'
 import AmqpClient, { AmqpClientOptions } from './AmqpClient'
 import { UnparseableContent, UnknownReply, ProcedureFailed, ServerError, CallTerminated } from './RpcClient/errors'
 import { newPromiseAndCallbacks, PromiseCallbacks } from './promises'
@@ -12,6 +12,7 @@ export interface RpcOptions {
   ackTimeout?: number
   idleTimeout?: number
   callTimeout?: number
+  logger?: StandardLogger
 }
 
 export interface RpcClientOptions {
@@ -33,7 +34,23 @@ export default class RpcClient {
   ackTimeout = 0
   idleTimeout = 60000 // 1 minute
   callTimeout = 0
+  log = logger as StandardLogger
 
+  /**
+   * Instances a new RPC Client with the given config
+   *
+   * @param {RpcClientOptions}   opts                            Config for this client, required.
+   * @param {AmqpClientOptions}  opts.amqplClient                Config for the underlying AMQP connection, required.
+   * @param {string}            [opts.amqplClient.amqpUrl]       URL for the AMQP broker.
+   * @param {object}            [opts.amqplClient.socketOptions] Config for the AMQP connection.
+   * @param {object}            [opts.amqplClient.connection]    An open AMQP connection, for re-use.
+   * @param {RpcOptions}        [opts.rpcClient]                 Config for the client itself.
+   * @param {string}            [opts.rpcClient.rpcExchangeName] Exchange where calls are published. Default 'mqrpc'. Must match server.
+   * @param {number}            [opts.rpcClient.ackTimeout]      In ms, how long to wait for a server's ack. Default infinite (0).
+   * @param {number}            [opts.rpcClient.idleTimeout]     In ms, how long can a server be unresponsive. Default 1min.
+   * @param {number}            [opts.rpcClient.callTimeout]     In ms, how long overall to wait for a call's return.
+   * @param {StandardLogger}    [opts.rpcClient.logger]          Custom logger for client use.
+   */
   constructor(opts: RpcClientOptions) {
     this.amqpClient = new AmqpClient(opts.amqpClient)
     this.calls = new Map()
@@ -43,6 +60,7 @@ export default class RpcClient {
       if (opts.rpcClient.ackTimeout) this.ackTimeout = opts.rpcClient.ackTimeout
       if (opts.rpcClient.idleTimeout) this.idleTimeout = opts.rpcClient.idleTimeout
       if (opts.rpcClient.callTimeout) this.callTimeout = opts.rpcClient.callTimeout
+      if (opts.rpcClient.logger) this.log = logger
     }
 
     this.callTimer = new Timer()
@@ -129,7 +147,7 @@ export default class RpcClient {
       const callbacks = this.calls.get(correlationId);
 
       if (!callbacks) {
-        return log.warn(
+        return this.log.warn(
           '[RpcClient] Received reply to unknown call.',
           { correlationId }
         );
