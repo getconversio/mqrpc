@@ -32,8 +32,8 @@ export default class RpcClient {
   amqpClient: AmqpClient
   rpcExchangeName = 'mqrpc'
   ackTimeout = 0
-  idleTimeout = 60000 // 1 minute
-  callTimeout = 0
+  idleTimeout = 0
+  callTimeout = 900000 // 15 minutes
   log = logger as StandardLogger
 
   /**
@@ -47,8 +47,8 @@ export default class RpcClient {
    * @param {RpcOptions}        [opts.rpcClient]                 Config for the client itself.
    * @param {string}            [opts.rpcClient.rpcExchangeName] Exchange where calls are published. Default 'mqrpc'. Must match server.
    * @param {number}            [opts.rpcClient.ackTimeout]      In ms, how long to wait for a server's ack. Default infinite (0).
-   * @param {number}            [opts.rpcClient.idleTimeout]     In ms, how long can a server be unresponsive. Default 1min.
-   * @param {number}            [opts.rpcClient.callTimeout]     In ms, how long overall to wait for a call's return.
+   * @param {number}            [opts.rpcClient.idleTimeout]     In ms, how long can a server be unresponsive. Default infinite (0).
+   * @param {number}            [opts.rpcClient.callTimeout]     In ms, how long overall to wait for a call's return. Default 15 minutes.
    * @param {StandardLogger}    [opts.rpcClient.logger]          Custom logger for client use.
    */
   constructor(opts: RpcClientOptions) {

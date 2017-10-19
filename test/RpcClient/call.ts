@@ -34,7 +34,7 @@ test('[unit] #call publishes the procedure call', async t => {
 
   await delay(1) // let the publish happen
 
-  const timeouts = { idleTimeout: 60000, callTimeout: 25 }
+  const timeouts = { callTimeout: 25 }
   const payload = JSON.stringify({ procedure: 'marco', args: ['polo', 42], timeouts })
   sinon.assert.calledWith(
     t.context.publishStub,
