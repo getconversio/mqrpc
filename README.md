@@ -25,6 +25,7 @@ MQRPC leverages [RabbitMQs Direct reply-to](https://www.rabbitmq.com/direct-repl
 * Any number of servers & clients
 * Argument & Return serialization
 * Error serialization
+* Timeout management
 
 ## API
 
@@ -45,6 +46,7 @@ type AmqpOpts = {
 
 type ServerOpts = {
   rpcExchangeName?: string        // Exchange name for server, defaults to 'mqrpc'.
+  logger?: object                 // For custom logger injection.
 }
 ```
 
@@ -86,10 +88,14 @@ type AmqpOpts = {
 
 type ClientOpts = {
   rpcExchangeName?: string        // Exchange name for server, defaults to 'mqrpc'.
+  logger?: object                 // For custom logger injection.
+  ackTimeout?: number             // How long should the client wait for a Server to start working on a call. Default 0 (no timeout).
+  idleTimeout?: number            // How long can the server be idle until it is considered "dead". Default 0 (no timeout).
+  callTimeout?: number            // Maximum time from making a call to receiving a reply. Default 900 000 (15 minutes).
 }
 ```
 
-Although all configs are optional, one of `amqpClient.connection` or `amqpClient.amqpUrl` must be passed.
+Although all configs are optional, one of `amqpClient.connection` or `amqpClient.amqpUrl` must be passed. Every timeout is in milliseconds and will throw `TimeoutExpired` when breached. See [timeouts](#timeouts) below for more info.
 
 ##### `async client.init()`
 
@@ -112,12 +118,36 @@ The following error types may be thrown:
 
 Neatly shut down the client. Closes the AMQP channel and, if one wasn't provided, the connection as well.
 
+## Timeouts
+
+Since it may not be sensible to wait forever for a call to resolve, the client exposes three configurable timeouts that will interrupt a call when expired. These are:
+
+### `ackTimeout`
+
+When a server receives a procedure call it will send an `ack` message back to the client, immediately before beginning execution. This signals the client that a server is handling their call. This timeout signals how long to wait until the `ack` is received.
+
+This timeout is disabled by default, since it's sensible to expect a server will eventually pick up a client's call. However, it may be used to control for times of high message congestion, for example.
+
+### `idleTimeout`
+
+While the server is executing a procedure, it'll periodically send `wait` messages back to the client (behind the scenes). This works as a heartbeat of sorts and indicates to the client that the server hasn't crashed, or in some way disconnected. This timeout indicates how long a server may be silent before aborting the call.
+
+This timeout is disabled by default, since RabbitMQ has its own hearbeat functionality that, in conjunction with its own `ack` mode, guarantees at-least-once execution. You may enable this if operating in `noAck` mode.
+
+### `callTimeout`
+
+The overall maximum time a call may take to resolve a request. This timeout starts on a procedure call and terminates when a reply is received.
+
+This timeout is 15 minutes by default.
+
 ## Future Features
 
-* Call timeouts
 * Publisher drain management
+* Server-side timeout management
 
 ## Testing
+
+You'll need a local RabbitMQ broker to run the tests. Optionally set env var `RABBITMQ_VHOST` to specify a vhost, uses `/` by default. Then:
 
 `$ yarn test`
 

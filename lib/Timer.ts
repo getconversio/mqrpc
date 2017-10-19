@@ -11,11 +11,11 @@ export interface Timeout {
   length: number
 }
 
-interface ActiveTimeout extends Timeout {
+export interface ActiveTimeout extends Timeout {
   handle: NodeJS.Timer
 }
 
-interface Entry {
+export interface Entry {
   readonly promise: Promise<any>
   readonly reject: Function
   readonly timeouts: Map<string, ActiveTimeout>
