@@ -1,6 +1,6 @@
 {
   "name": "mqrpc",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "💫 Easy RPC over RabbitMQ",
   "keywords": [
     "💫",
