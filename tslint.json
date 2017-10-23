@@ -1,0 +1,23 @@
+{
+  "extends": "tslint:recommended",
+  "rules": {
+    "arrow-parens": [true, "ban-single-arg-parens"],
+    "curly": [true, "ignore-same-line"],
+    "interface-name": [true, "never-prefix"],
+    "max-classes-per-file": false,
+    "member-access": false,
+    "object-literal-key-quotes": [true, "as-needed"],
+    "object-literal-sort-keys": false,
+    "ordered-imports": [
+      true,
+      {
+        "import-sources-order": "any",
+        "grouped-imports": true,
+        "named-imports-order": "case-insensitive"
+      }
+    ],
+    "quotemark": [true, "single", "jsx-double", "avoid-template"],
+    "semicolon": [true, "never"],
+    "trailing-comma": [true, { "singleline": "never", "multiline": "never" }]
+  }
+}

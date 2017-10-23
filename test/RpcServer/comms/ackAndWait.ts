@@ -5,12 +5,12 @@ import { AMQP_URL } from '../../_config'
 import AmqpClient from '../../../lib/AmqpClient'
 import { ack, wait } from '../../../lib/RpcServer/comms'
 
-const sampleMessage = (<Message>{
+const sampleMessage = {
   fields: { deliveryTag: 1234567890987654321 },
   properties: { replyTo: 'amqp.rabbitmq.reply-to', correlationId: '123456' }
-})
+} as Message
 
-let amqpClient = new AmqpClient({ amqpUrl: AMQP_URL })
+const amqpClient = new AmqpClient({ amqpUrl: AMQP_URL })
 
 test.before(() => amqpClient.init())
 test.after.always(() => amqpClient.term())

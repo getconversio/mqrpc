@@ -38,7 +38,7 @@ test.serial('[unit] #init asserts the client\'s exchange', async t => {
 
 test.serial('[unit] #init asserts the call queue and binds it to the exchange', async t => {
   const channel = await amqpClient.connection.createChannel()
-  let bindSpy = t.context.sandbox.spy(channel, 'bindQueue') // There's no way to check if the queue is bound
+  const bindSpy = t.context.sandbox.spy(channel, 'bindQueue') // There's no way to check if the queue is bound
   t.context.sandbox.stub(amqpClient.connection, 'createChannel').resolves(channel)
 
   t.context.server = new RpcServer({ amqpClient: { connection: amqpClient.connection } })
@@ -51,7 +51,7 @@ test.serial('[unit] #init asserts the call queue and binds it to the exchange', 
 
 test.serial('[unit] #init changes queue & exchange namespaces as configured', async t => {
   const channel = await amqpClient.connection.createChannel()
-  let bindSpy = t.context.sandbox.spy(channel, 'bindQueue') // There's no way to check if the queue is bound
+  const bindSpy = t.context.sandbox.spy(channel, 'bindQueue') // There's no way to check if the queue is bound
   t.context.sandbox.stub(amqpClient.connection, 'createChannel').resolves(channel)
 
   t.context.server = new RpcServer({
@@ -68,7 +68,7 @@ test.serial('[unit] #init changes queue & exchange namespaces as configured', as
 
 test.serial('[unit] #init starts listening for calls', async t => {
   const channel = await amqpClient.connection.createChannel()
-  let consumeSpy = t.context.sandbox.spy(channel, 'consume')
+  const consumeSpy = t.context.sandbox.spy(channel, 'consume')
 
   t.context.sandbox.stub(amqpClient.connection, 'createChannel').resolves(channel)
 

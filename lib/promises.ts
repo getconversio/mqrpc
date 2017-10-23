@@ -1,6 +1,6 @@
 export interface PromiseCallbacks {
-  resolve: Function
-  reject: Function
+  resolve: (result?: any) => void
+  reject: (err: Error) => void
 }
 
 /**
@@ -10,10 +10,10 @@ export const newPromiseAndCallbacks = (): [Promise<any>, PromiseCallbacks] => {
   // the noop business is because TypeScript doesn't know the callback is
   // invoked immediately, and the error-disabling comment isn't available in
   // 2.5.0
-  const noop = () => {}
+  const noop = () => { /* noop */ }
 
-  let resolve: Function = noop
-  let reject: Function = noop
+  let resolve = noop
+  let reject = noop
 
   const promise = new Promise((res, rej) => {
     resolve = res

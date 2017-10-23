@@ -1,8 +1,8 @@
-import { Message, Channel } from 'amqplib'
+import { Channel, Message } from 'amqplib'
 import AmqpClient, { AmqpClientOptions } from './AmqpClient'
 import logger from './logger'
-import { TimeoutDesc, ClientPayload, StandardLogger } from './common'
-import { RpcServerError, NoSuchProcedure, ProcedureFailed, InvalidCall } from './RpcServer/errors'
+import { ClientPayload, StandardLogger, TimeoutDesc } from './common'
+import { InvalidCall, NoSuchProcedure, ProcedureFailed, RpcServerError } from './RpcServer/errors'
 import * as comms from './RpcServer/comms'
 
 export interface RpcOptions {
@@ -16,7 +16,7 @@ export interface RpcServerOptions {
 }
 
 export default class RpcServer {
-  procedures: Map<string, Function>
+  procedures: Map<string, (...args: any[]) => any>
   amqpClient: AmqpClient
   rpcExchangeName = 'mqrpc'
   log = logger as StandardLogger
@@ -30,7 +30,8 @@ export default class RpcServer {
    * @param {object}            [opts.amqplClient.socketOptions] Config for the AMQP connection.
    * @param {object}            [opts.amqplClient.connection]    An open AMQP connection, for re-use.
    * @param {RpcOptions}        [opts.rpcServer]                 Config for the client itself.
-   * @param {string}            [opts.rpcServer.rpcExchangeName] Exchange where calls are published. Default 'mqrpc'. Must match client.
+   * @param {string}            [opts.rpcServer.rpcExchangeName] Exchange where calls are published. Default 'mqrpc'.
+   *                                                             Must match client.
    * @param {StandardLogger}    [opts.rpcServer.logger]          Custom logger for client use.
    */
   constructor(opts: RpcServerOptions) {
@@ -103,7 +104,7 @@ export default class RpcServer {
     await this.amqpClient.term()
   }
 
-  register(procedure: string, handler: Function) {
+  register(procedure: string, handler: (...args: any[]) => any) {
     this.procedures.set(procedure, handler)
   }
 
