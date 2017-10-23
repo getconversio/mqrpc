@@ -19,7 +19,7 @@ test.beforeEach(async t => {
 test.afterEach(t => t.context.sandbox.restore())
 
 test('[unit] #term calls #term on the Amqp client', async t => {
-  const spy = t.context.sandbox.spy(t.context.client.amqpClient, 'term');
+  const spy = t.context.sandbox.spy(t.context.client.amqpClient, 'term')
 
   await t.context.client.term()
 

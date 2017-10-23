@@ -1,5 +1,5 @@
 import test from 'ava'
-import { RpcServer, RpcClient } from '../lib'
+import { RpcClient, RpcServer } from '../lib'
 import Server from '../lib/RpcServer'
 import Client from '../lib/RpcClient'
 

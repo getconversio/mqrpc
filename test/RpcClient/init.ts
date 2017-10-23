@@ -19,7 +19,7 @@ test('[unit] #init instances an AmqpClient', async t => {
 test.serial('[unit] #init starts listening for replies', async t => {
   const connection = await amqp.connect(AMQP_URL)
   const channel = await connection.createChannel()
-  let consumeSpy = sinon.spy(channel, 'consume')
+  const consumeSpy = sinon.spy(channel, 'consume')
 
   sinon.stub(connection, 'createChannel').resolves(channel)
   t.context.client = new RpcClient({ amqpClient: { connection } })

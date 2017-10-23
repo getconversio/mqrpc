@@ -17,7 +17,7 @@ export interface ActiveTimeout extends Timeout {
 
 export interface Entry {
   readonly promise: Promise<any>
-  readonly reject: Function
+  readonly reject: (err: Error) => void
   readonly timeouts: Map<string, ActiveTimeout>
 }
 
@@ -30,7 +30,7 @@ export interface Entry {
  * @param {Timeout}  timeout  The timeout to activate
  * @param {Function} reject Called with a TimeoutExpired error when the timer expires
  */
-const activateTimeout = (timeout: Timeout, reject: Function): ActiveTimeout => {
+const activateTimeout = (timeout: Timeout, reject: (err: Error) => void): ActiveTimeout => {
   return Object.assign({}, timeout, {
     handle: setTimeout(() => {
       reject(new TimeoutExpired(timeout))
@@ -127,7 +127,7 @@ export default class Timer {
    * Removes every entry and every timeout.
    */
   clear(): void {
-    for (let entryId of this.entries.keys()) {
+    for (const entryId of this.entries.keys()) {
       this.remove(entryId)
     }
   }

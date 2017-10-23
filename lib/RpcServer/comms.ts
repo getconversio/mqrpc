@@ -1,5 +1,5 @@
 import { Channel, Message } from 'amqplib'
-import { RpcServerError, ProcedureFailed, NoSuchProcedure, InvalidCall } from './errors'
+import { InvalidCall, NoSuchProcedure, ProcedureFailed, RpcServerError } from './errors'
 import { ClientPayload, TimeoutDesc } from '../common'
 
 /**
@@ -55,11 +55,11 @@ export const wait = async (channel: Channel, message: Message) => {
  * @param {RpcServerError | any} response What to send back to the client.
  */
 export const reply = async (channel: Channel, message: Message, response?: RpcServerError | any) => {
-  const reply = response && response instanceof RpcServerError
+  response = response && response instanceof RpcServerError
     ? { type: 'error', error: response.toObject() }
     : { type: 'reply', reply: response }
 
-  await sendMessage(channel, message.properties, reply)
+  await sendMessage(channel, message.properties, response)
   await channel.ack(message)
 }
 
@@ -74,7 +74,7 @@ export const reply = async (channel: Channel, message: Message, response?: RpcSe
  *                                 is in any way invalid.
  */
 export const extractCallContent = (message: Message): ClientPayload => {
-  let content: ClientPayload;
+  let content: ClientPayload
 
   if (!message.properties.replyTo) throw new Error('Message has no replyTo')
   if (!message.properties.correlationId) throw new Error('Message has no correlationId')

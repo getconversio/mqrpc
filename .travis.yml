@@ -1,6 +1,7 @@
 language: node_js
 node_js:
-- '8'
+  - '7'
+  - '8'
 cache: yarn
 notifications:
   slack:
@@ -14,5 +15,6 @@ deploy:
   on:
     tags: true
     repo: getconversio/mqrpc
+script: npm test && npm run lint
 services:
   - rabbitmq

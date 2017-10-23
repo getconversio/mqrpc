@@ -1,9 +1,9 @@
 import * as uuid from 'uuid/v4'
 import * as amqp from 'amqplib'
 import logger from './logger'
-import { ServerPayload, ClientPayload, TimeoutDesc, StandardLogger } from './common'
+import { ClientPayload, ServerPayload, StandardLogger, TimeoutDesc } from './common'
 import AmqpClient, { AmqpClientOptions } from './AmqpClient'
-import { UnparseableContent, UnknownReply, ProcedureFailed, ServerError, CallTerminated } from './RpcClient/errors'
+import { CallTerminated, ProcedureFailed, ServerError, UnknownReply, UnparseableContent } from './RpcClient/errors'
 import { newPromiseAndCallbacks, PromiseCallbacks } from './promises'
 import { default as Timer, Timeout } from './Timer'
 
@@ -26,15 +26,15 @@ const deserializeServerError = (obj: any): Error => {
 }
 
 export default class RpcClient {
-  protected calls: Map<string, PromiseCallbacks>
-  protected callTimer: Timer
-
   amqpClient: AmqpClient
   rpcExchangeName = 'mqrpc'
   ackTimeout = 0
   idleTimeout = 0
   callTimeout = 900000 // 15 minutes
   log = logger as StandardLogger
+
+  protected calls: Map<string, PromiseCallbacks>
+  protected callTimer: Timer
 
   /**
    * Instances a new RPC Client with the given config
@@ -45,10 +45,14 @@ export default class RpcClient {
    * @param {object}            [opts.amqplClient.socketOptions] Config for the AMQP connection.
    * @param {object}            [opts.amqplClient.connection]    An open AMQP connection, for re-use.
    * @param {RpcOptions}        [opts.rpcClient]                 Config for the client itself.
-   * @param {string}            [opts.rpcClient.rpcExchangeName] Exchange where calls are published. Default 'mqrpc'. Must match server.
-   * @param {number}            [opts.rpcClient.ackTimeout]      In ms, how long to wait for a server's ack. Default infinite (0).
-   * @param {number}            [opts.rpcClient.idleTimeout]     In ms, how long can a server be unresponsive. Default infinite (0).
-   * @param {number}            [opts.rpcClient.callTimeout]     In ms, how long overall to wait for a call's return. Default 15 minutes.
+   * @param {string}            [opts.rpcClient.rpcExchangeName] Exchange where calls are published. Default 'mqrpc'.
+   *                                                             Must match server.
+   * @param {number}            [opts.rpcClient.ackTimeout]      In ms, how long to wait for a server's ack. Default
+   *                                                             infinite (0).
+   * @param {number}            [opts.rpcClient.idleTimeout]     In ms, how long can a server be unresponsive. Default
+   *                                                             infinite (0).
+   * @param {number}            [opts.rpcClient.callTimeout]     In ms, how long overall to wait for a call's return.
+   *                                                             Default 15 minutes.
    * @param {StandardLogger}    [opts.rpcClient.logger]          Custom logger for client use.
    */
   constructor(opts: RpcClientOptions) {
@@ -102,7 +106,7 @@ export default class RpcClient {
    * @return {Promise<any>}           Whatever the procedure returns.
    */
   async call(procedure: string, ...args: any[]) {
-    const [callPromise, callPromiseCallbacks] = newPromiseAndCallbacks();
+    const [callPromise, callPromiseCallbacks] = newPromiseAndCallbacks()
     const correlationId = uuid()
 
     this.calls.set(correlationId, callPromiseCallbacks)
@@ -144,13 +148,13 @@ export default class RpcClient {
   protected makeReplyHandler(): (message: amqp.Message) => any {
     return (message: amqp.Message) => {
       const correlationId = message.properties.correlationId
-      const callbacks = this.calls.get(correlationId);
+      const callbacks = this.calls.get(correlationId)
 
       if (!callbacks) {
         return this.log.warn(
           '[RpcClient] Received reply to unknown call.',
           { correlationId }
-        );
+        )
       }
 
       let content: ServerPayload
@@ -169,10 +173,10 @@ export default class RpcClient {
             this.callTimer.addTimeouts(correlationId, { id: 'idleTimeout', length: this.idleTimeout })
           }
 
-          break;
+          break
         case 'wait':
           this.callTimer.restartTimeouts(correlationId, 'idleTimeout')
-          break;
+          break
         case 'error':
           return callbacks.reject(deserializeServerError(content.error))
         case 'reply':

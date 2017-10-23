@@ -2,7 +2,7 @@ import test from 'ava'
 import Timer from '../../lib/Timer'
 import { delay } from '../_utils'
 
-const timeout = { id: 'ackTo', length: 25 }
+const timeout = { id: 'ackTo', length: 35 }
 
 test.beforeEach(t => t.context.timer = new Timer())
 test.afterEach(t => t.context.timer.clear())
@@ -20,15 +20,15 @@ test('[unit] #restartTimeouts restarts the given timeout', async t => {
   t.plan(2)
 
   const start = Date.now()
-  const promise = t.context.timer.addTimeouts('an-id', timeout, { id: 'slowTo', length: 30 })
+  const promise = t.context.timer.addTimeouts('an-id', timeout, { id: 'slowTo', length: 50 })
 
-  await delay(15)
+  await delay(20)
 
   t.context.timer.restartTimeouts('an-id', timeout.id, 'slowTo')
 
   await promise.catch(err => {
-    t.regex(err.message, /ackTo.*25/)
-    t.true(Date.now() >= start + 40)
+    t.regex(err.message, /ackTo.*35/)
+    t.true(Date.now() >= start + 55)
   })
 })
 
@@ -36,14 +36,14 @@ test('[unit] #restartTimeouts does not affect other timeouts', async t => {
   t.plan(2)
 
   const start = Date.now()
-  const promise = t.context.timer.addTimeouts('an-id', timeout, { id: 'slowTo', length: 30 })
+  const promise = t.context.timer.addTimeouts('an-id', timeout, { id: 'slowTo', length: 50 })
 
-  await delay(15)
+  await delay(20)
 
   t.context.timer.restartTimeouts('an-id', timeout.id)
 
   await promise.catch(err => {
-    t.regex(err.message, /slowTo.*30/)
-    t.true(Date.now() >= start + 30)
+    t.regex(err.message, /slowTo.*50/)
+    t.true(Date.now() >= start + 50)
   })
 })

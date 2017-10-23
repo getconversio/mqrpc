@@ -33,7 +33,7 @@ test('[unit] #whileSendingHeartbeats sends nothing when called, returns a functi
 test('[unit] #whileSendingHeartbeats sends an `ack` message when return function is called', async t => {
   expectMessage(t.context.channelMock, 'ack')
 
-  await whileSendingHeartbeats(t.context.fakeChannel, fakeMessage, { })(async () => {})
+  await whileSendingHeartbeats(t.context.fakeChannel, fakeMessage, { })(async () => { /* */ })
 
   t.context.channelMock.verify()
   t.pass()
@@ -53,7 +53,7 @@ test('[unit] #whileSendingHeartbeats resolves to whatever the inner function res
 test('[unit] #whileSendingHeartbeats does not send `wait` messages if idleTimeout is not set', async t => {
   expectMessage(t.context.channelMock, 'ack')
 
-  await whileSendingHeartbeats(t.context.fakeChannel, fakeMessage, { })(async () => {})
+  await whileSendingHeartbeats(t.context.fakeChannel, fakeMessage, { })(async () => { /* */ })
   await delay(50)
 
   t.context.channelMock.verify()

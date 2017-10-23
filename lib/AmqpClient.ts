@@ -34,7 +34,7 @@ export default class AmqpClient {
   }
 
   async term() {
-    await this.channel.close();
+    await this.channel.close()
     if (this.ownConnection) await this.connection.close()
   }
 }

@@ -1,6 +1,6 @@
 # MQRPC
 
-> Easy RPC over RabbitMQ
+> 💫 Easy RPC over RabbitMQ
 
 Easily implement RPC over your RabbitMQ broker with a few lines of code:
 

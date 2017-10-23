@@ -9,7 +9,7 @@ import RpcClient from '../lib/RpcClient'
 import * as clientErrors from '../lib/RpcClient/errors'
 import { TimeoutExpired } from '../lib/Timer'
 
-let connection: amqp.Connection;
+let connection: amqp.Connection
 
 test.before(async () => {
   connection = await amqp.connect(AMQP_URL)
@@ -51,7 +51,7 @@ test('[integration] calling an unknown procedure raises', async t => {
 })
 
 test('[integration] works nicely with no arguments and no returns', async t => {
-  t.context.server.register('noop', () => {})
+  t.context.server.register('noop', () => { /* noop */ })
   t.is(await t.context.client.call('noop'), undefined)
 })
 
@@ -71,7 +71,7 @@ test.serial('[integration] clears call timeouts on resolution and rejection', as
   process.removeListener('unhandledRejection', unhandledListener)
 
   t.pass()
-});
+})
 
 test('[integration] a slow call still works with well configured timeouts', async t => {
   t.context.server.register('mqrpc.slow', () => delay(200).then(() => 42))
@@ -94,5 +94,5 @@ test('[integration] a slow call fails with a short callTimeout', async t => {
     'callTimeout expired after 50ms'
   )
 
-  await delay(100) // dont close channel yet (server will still reply)
+  await delay(150) // dont close channel yet (server will still reply)
 })

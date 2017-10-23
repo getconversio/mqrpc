@@ -3,7 +3,7 @@ import { delay } from '../_utils'
 import RpcClient from '../../lib/RpcClient'
 import { newPromiseAndCallbacks } from '../../lib/promises'
 import { TimeoutExpired } from '../../lib/Timer'
-import { UnparseableContent, UnknownReply, ProcedureFailed as ClientProcFailed } from '../../lib/RpcClient/errors'
+import { ProcedureFailed as ClientProcFailed, UnknownReply, UnparseableContent } from '../../lib/RpcClient/errors'
 import { ProcedureFailed as ServerProcFailed } from '../../lib/RpcServer/errors'
 
 test.beforeEach(t => {
