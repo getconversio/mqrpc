@@ -2,7 +2,7 @@ import test from 'ava'
 import Timer from '../../lib/Timer'
 import { delay } from '../_utils'
 
-const timeout = { id: 'ackTo', length: 35 }
+const timeout = { id: 'ackTo', length: 40 }
 
 test.beforeEach(t => t.context.timer = new Timer())
 test.afterEach(t => t.context.timer.clear())
@@ -27,8 +27,8 @@ test('[unit] #restartTimeouts restarts the given timeout', async t => {
   t.context.timer.restartTimeouts('an-id', timeout.id, 'slowTo')
 
   await promise.catch(err => {
-    t.regex(err.message, /ackTo.*35/)
-    t.true(Date.now() >= start + 55)
+    t.regex(err.message, /ackTo.*40/)
+    t.true(Date.now() >= start + 60)
   })
 })
 

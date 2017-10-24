@@ -69,6 +69,10 @@ server.register('meaning.of.life', async () => 42)
 
 `register` should be called before `init` to ensure the server won't receive any unknown calls by clients that are already live.
 
+##### `server.registerDebugProcedures()`
+
+Adds a default procedure for debugging, with name `mqrpc.echo`, that returns any given argument.
+
 ##### `async server.term()`
 
 Neatly shut down the server. Closes the AMQP channel and, if one wasn't provided, the connection as well.
