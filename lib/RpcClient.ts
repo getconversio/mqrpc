@@ -64,7 +64,7 @@ export default class RpcClient {
       if (opts.rpcClient.ackTimeout) this.ackTimeout = opts.rpcClient.ackTimeout
       if (opts.rpcClient.idleTimeout) this.idleTimeout = opts.rpcClient.idleTimeout
       if (opts.rpcClient.callTimeout) this.callTimeout = opts.rpcClient.callTimeout
-      if (opts.rpcClient.logger) this.log = logger
+      if (opts.rpcClient.logger) this.log = opts.rpcClient.logger
     }
 
     this.callTimer = new Timer()

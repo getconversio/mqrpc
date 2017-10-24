@@ -40,7 +40,7 @@ export default class RpcServer {
 
     if (opts.rpcServer) {
       if (opts.rpcServer.rpcExchangeName) this.rpcExchangeName = opts.rpcServer.rpcExchangeName
-      if (opts.rpcServer.logger) this.log = logger
+      if (opts.rpcServer.logger) this.log = opts.rpcServer.logger
     }
   }
 
