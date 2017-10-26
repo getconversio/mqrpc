@@ -48,3 +48,8 @@ test('[unit] #term clears all call timeouts', async t => {
   sinon.assert.calledOnce(spy)
   t.pass()
 })
+
+test('[unit] #term is idempotent', async t => {
+  await t.context.client.term()
+  await t.notThrows(t.context.client.term())
+})

@@ -22,7 +22,7 @@ test.afterEach(async t => {
   ])
 })
 
-test('[unit] #init instances an AmqpClient', async t => {
+test.serial('[unit] #init instances an AmqpClient', async t => {
   t.context.server = new RpcServer({ amqpClient: { amqpUrl: AMQP_URL } })
   await t.context.server.init()
 

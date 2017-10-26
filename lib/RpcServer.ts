@@ -21,6 +21,8 @@ export default class RpcServer {
   rpcExchangeName = 'mqrpc'
   log = logger as StandardLogger
 
+  protected consumerTag?: string
+
   /**
    * Instances a new RPC Server with the given config
    *
@@ -62,7 +64,7 @@ export default class RpcServer {
       `${this.rpcExchangeName}.call`, this.rpcExchangeName, 'call'
     )
 
-    await this.amqpClient.channel.consume(
+    const { consumerTag } = await this.amqpClient.channel.consume(
       `${this.rpcExchangeName}.call`,
       async (message: Message) => {
         let content: ClientPayload
@@ -98,10 +100,15 @@ export default class RpcServer {
         }
       }
     )
+
+    this.consumerTag = consumerTag
   }
 
   async term() {
+    if (!this.consumerTag) return
+    await this.amqpClient.channel.cancel(this.consumerTag)
     await this.amqpClient.term()
+    delete this.consumerTag
   }
 
   register(procedure: string, handler: (...args: any[]) => any) {
