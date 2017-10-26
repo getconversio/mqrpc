@@ -93,14 +93,14 @@ test('[unit] #makeReplyHandler does not set the idleTimeout on an `ack` message,
 test('[unit] #makeReplyHandler restarts the idleTimeout when a `wait` message is received', async t => {
   t.plan(2)
 
-  const timerPromise = t.context.client.callTimer.addTimeouts('works', { id: 'idleTimeout', length: 40 })
+  const timerPromise = t.context.client.callTimer.addTimeouts('works', { id: 'idleTimeout', length: 50 })
   const message = { properties: { correlationId: 'works' }, content: new Buffer('{"type":"wait"}') }
 
   await delay(20)
 
   t.context.client.makeReplyHandler()(message)
 
-  await delay(25)
+  await delay(35)
 
   await t.notThrows(Promise.race([timerPromise, Promise.resolve(42)]))
 
