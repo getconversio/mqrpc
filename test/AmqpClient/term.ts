@@ -17,3 +17,8 @@ test('[unit] #term closes the connection', async t => {
   t.context.client.connection.on('close', () => t.pass())
   await t.context.client.term()
 })
+
+test('[unit] #term is idempotent', async t => {
+  await t.context.client.term()
+  await t.notThrows(t.context.client.term())
+})
