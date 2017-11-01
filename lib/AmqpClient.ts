@@ -4,6 +4,7 @@ export interface AmqpClientOptions {
   connection?: amqp.Connection
   amqpUrl?: string
   socketOptions?: object
+  prefetchCount?: number
 }
 
 export default class AmqpClient {
@@ -11,6 +12,7 @@ export default class AmqpClient {
   socketOptions?: object
   connection: amqp.Connection
   channel: amqp.Channel
+  prefetchCount = 100
 
   protected ownConnection = false
   protected inited = false
@@ -18,6 +20,7 @@ export default class AmqpClient {
   constructor(opts: AmqpClientOptions) {
     if (opts.connection) this.connection = opts.connection
     if (opts.amqpUrl) this.amqpUrl = opts.amqpUrl
+    if (typeof opts.prefetchCount !== 'undefined') this.prefetchCount = opts.prefetchCount
     this.socketOptions = opts.socketOptions
   }
 
@@ -34,6 +37,7 @@ export default class AmqpClient {
     }
 
     this.channel = await this.connection.createChannel()
+    await this.channel.prefetch(this.prefetchCount, true)
 
     this.inited = true
   }
