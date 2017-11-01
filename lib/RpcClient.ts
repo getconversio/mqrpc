@@ -40,10 +40,12 @@ export default class RpcClient {
    * Instances a new RPC Client with the given config
    *
    * @param {RpcClientOptions}   opts                            Config for this client, required.
-   * @param {AmqpClientOptions}  opts.amqplClient                Config for the underlying AMQP connection, required.
-   * @param {string}            [opts.amqplClient.amqpUrl]       URL for the AMQP broker.
-   * @param {object}            [opts.amqplClient.socketOptions] Config for the AMQP connection.
-   * @param {object}            [opts.amqplClient.connection]    An open AMQP connection, for re-use.
+   * @param {AmqpClientOptions}  opts.amqpClient                 Config for the underlying AMQP connection, required.
+   * @param {string}            [opts.amqpClient.amqpUrl]        URL for the AMQP broker.
+   * @param {object}            [opts.amqpClient.socketOptions]  Config for the AMQP connection.
+   * @param {object}            [opts.amqpClient.connection]     An open AMQP connection, for re-use.
+   * @param {number}            [opts.amqpClient.prefetchCount]  Global prefetch count when consuming messages. Default
+   *                                                             is 100.
    * @param {RpcOptions}        [opts.rpcClient]                 Config for the client itself.
    * @param {string}            [opts.rpcClient.rpcExchangeName] Exchange where calls are published. Default 'mqrpc'.
    *                                                             Must match server.

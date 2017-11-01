@@ -40,8 +40,9 @@ Instances a new server with the given config. `amqpClient` is required:
 ```typescript
 type AmqpOpts = {
   connection?: amqplib.Connection // Pass a live amqplib connection here to re-use it.
-  amqpUrl?: string,               // The RabbitMQ URL. Ignored if `connection` is provided.
-  socketOptions?: object,         // Customize connection to RabbitMQ.
+  amqpUrl?: string                // The RabbitMQ URL. Ignored if `connection` is provided.
+  socketOptions?: object          // Customize connection to RabbitMQ.
+  prefetchCount: number           // Customize consumer prefetch count.
 }
 
 type ServerOpts = {
@@ -86,8 +87,9 @@ Instances a new client with the given config. `amqpClient` is required:
 ```typescript
 type AmqpOpts = {
   connection?: amqplib.Connection // Pass a live amqplib connection here to re-use it.
-  amqpUrl?: string,               // The RabbitMQ URL. Ignored if `connection` is provided.
-  socketOptions?: object,         // Customize connection to RabbitMQ.
+  amqpUrl?: string                // The RabbitMQ URL. Ignored if `connection` is provided.
+  socketOptions?: object          // Customize connection to RabbitMQ.
+  prefetchCount: number           // Customize consumer prefetch count.
 }
 
 type ClientOpts = {

@@ -64,8 +64,8 @@ test('[unit] #whileSendingHeartbeats sends `wait` messages if idleTimeout is set
   expectMessage(t.context.channelMock, 'ack')
   expectMessage(t.context.channelMock, 'wait', 2)
 
-  const fn = () => delay(90)
-  await whileSendingHeartbeats(t.context.fakeChannel, fakeMessage, { idleTimeout: 100 })(fn)
+  const fn = () => delay(140)
+  await whileSendingHeartbeats(t.context.fakeChannel, fakeMessage, { idleTimeout: 150 })(fn)
 
   t.context.channelMock.verify()
   t.pass()
@@ -75,9 +75,9 @@ test('[unit] #whileSendingHeartbeats stops sending `wait` messages after functio
   expectMessage(t.context.channelMock, 'ack')
   expectMessage(t.context.channelMock, 'wait', 2)
 
-  const fn = () => delay(90)
-  await whileSendingHeartbeats(t.context.fakeChannel, fakeMessage, { idleTimeout: 100 })(fn)
-  await delay(30)
+  const fn = () => delay(140)
+  await whileSendingHeartbeats(t.context.fakeChannel, fakeMessage, { idleTimeout: 150 })(fn)
+  await delay(50)
 
   t.context.channelMock.verify()
   t.pass()
