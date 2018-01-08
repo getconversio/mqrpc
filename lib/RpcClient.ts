@@ -87,14 +87,36 @@ export default class RpcClient {
   }
 
   /**
-   * Immediately tear down the client. Stops consuming replies, closes the
-   * channel and, if it owns the connection, closes it too.
+   * Tear down the client, optionally waiting for pending calls to resolve.
+   * Stops consuming replies, closes the channel and, if it owns the connection,
+   * closes it too.
+   *
+   * When calls are pending and the wait time expired or no wait time was given,
+   * the calls are rejected with a CallTerminated error.
+   *
+   * @param  {number} [opts.waitForCalls] How long, in ms, to wait for pending
+   *                                      calls. Give 0 for indefinitely.
    */
-  async term() {
-    await this.amqpClient.term()
+  async term({ waitForCalls }: { waitForCalls?: number } = {}) {
+    if (typeof waitForCalls !== 'undefined' && this.calls.size > 0) {
+      let waited = 0
+      const checkCallsInterval = setInterval(() => {
+        waited += 50
+
+        if (this.calls.size === 0 || (waitForCalls > 0 && waited > waitForCalls)) {
+          clearInterval(checkCallsInterval)
+          return this.term()
+        }
+      }, 50)
+
+      return
+    }
+
     this.callTimer.clear()
     this.calls.forEach(({ reject }) => reject(new CallTerminated()))
     this.calls.clear()
+
+    await this.amqpClient.term()
   }
 
   /**

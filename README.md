@@ -120,9 +120,11 @@ The following error types may be thrown:
 * `UnparseableContent`: Whatever reply we got from a server could not be parsed.
 * `UnknownReply`: Reply was parseable, but the format isn't understood.
 
-##### `async client.term()`
+##### `async client.term({ waitForCalls: number })`
 
-Neatly shut down the client. Closes the AMQP channel and, if one wasn't provided, the connection as well.
+Neatly shut down the client. Terminates any active calls, closes the AMQP channel and, if one wasn't provided, the connection as well.
+
+Will wait up to `waitForCalls` milliseconds for pending calls to resolve, or indefinitely if given 0ms.
 
 ## Timeouts
 

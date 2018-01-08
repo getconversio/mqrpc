@@ -3,11 +3,12 @@ import * as sinon from 'sinon'
 import { AMQP_URL } from '../_config'
 import RpcClient from '../../lib/RpcClient'
 import { CallTerminated } from '../../lib/RpcClient/errors'
+import { TimeoutExpired } from '../../lib/Timer'
 
 test.beforeEach(async t => {
   t.context.client = new RpcClient({
     amqpClient: { amqpUrl: AMQP_URL },
-    rpcClient: { idleTimeout: 30 }
+    rpcClient: { idleTimeout: 30, callTimeout: 100 }
   })
 
   await t.context.client.init()
@@ -52,4 +53,12 @@ test('[unit] #term clears all call timeouts', async t => {
 test('[unit] #term is idempotent', async t => {
   await t.context.client.term()
   await t.notThrows(t.context.client.term())
+})
+
+test('[unit] #term can wait for pending calls', async t => {
+  const callPromise = t.context.client.call('marco')
+
+  await t.context.client.term({ waitForCalls: 500 })
+
+  await t.throws(callPromise, TimeoutExpired)
 })
