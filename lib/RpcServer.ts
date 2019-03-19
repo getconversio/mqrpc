@@ -31,6 +31,7 @@ export default class RpcServer {
    * @param {string}            [opts.amqpClient.amqpUrl]        URL for the AMQP broker.
    * @param {object}            [opts.amqpClient.socketOptions]  Config for the AMQP connection.
    * @param {object}            [opts.amqpClient.connection]     An open AMQP connection, for re-use.
+   * @param {object}            [opts.amqpClient.channel]        An open AMQP channel, for re-use.
    * @param {number}            [opts.amqpClient.prefetchCount]  Global prefetch count when consuming messages. Default
    *                                                             is 100.
    * @param {RpcOptions}        [opts.rpcServer]                 Config for the client itself.
