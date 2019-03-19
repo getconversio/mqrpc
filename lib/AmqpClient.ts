@@ -2,6 +2,7 @@ import * as amqp from 'amqplib'
 
 export interface AmqpClientOptions {
   connection?: amqp.Connection
+  channel?: amqp.Channel
   amqpUrl?: string
   socketOptions?: object
   prefetchCount?: number
@@ -15,28 +16,34 @@ export default class AmqpClient {
   prefetchCount = 100
 
   protected ownConnection = false
+  protected ownChannel = false
   protected inited = false
 
   constructor(opts: AmqpClientOptions) {
     if (opts.connection) this.connection = opts.connection
+    if (opts.channel) this.channel = opts.channel
     if (opts.amqpUrl) this.amqpUrl = opts.amqpUrl
     if (typeof opts.prefetchCount !== 'undefined') this.prefetchCount = opts.prefetchCount
     this.socketOptions = opts.socketOptions
   }
 
   async init() {
-    if (!this.amqpUrl && !this.connection) {
-      throw new Error('Either connection or amqpUrl must be provided')
+    if (!this.amqpUrl && !this.connection && !this.channel) {
+      throw new Error('Either connection, channel or amqpUrl must be provided')
     }
 
     if (this.inited) return
 
-    if (!this.connection && this.amqpUrl) {
+    if (!this.connection && !this.channel && this.amqpUrl) {
       this.connection = await amqp.connect(this.amqpUrl, this.socketOptions)
       this.ownConnection = true
     }
 
-    this.channel = await this.connection.createChannel()
+    if (!this.channel) {
+      this.channel = await this.connection.createChannel()
+      this.ownChannel = true
+    }
+
     await this.channel.prefetch(this.prefetchCount, true)
 
     this.inited = true
@@ -44,7 +51,7 @@ export default class AmqpClient {
 
   async term() {
     if (!this.inited) return
-    await this.channel.close()
+    if (this.ownChannel) await this.channel.close()
     if (this.ownConnection) await this.connection.close()
     this.inited = false
   }
