@@ -35,6 +35,7 @@ export default class RpcClient {
 
   protected calls: Map<string, PromiseCallbacks>
   protected callTimer: Timer
+  protected consumerTag?: string
 
   /**
    * Instances a new RPC Client with the given config
@@ -80,11 +81,16 @@ export default class RpcClient {
    */
   async init() {
     await this.amqpClient.init()
-    await this.amqpClient.channel.consume(
+
+    if (this.consumerTag) return
+
+    const { consumerTag } = await this.amqpClient.channel.consume(
       'amq.rabbitmq.reply-to',
       this.makeReplyHandler(),
       { noAck: true }
     )
+
+    this.consumerTag = consumerTag
   }
 
   /**
@@ -116,6 +122,11 @@ export default class RpcClient {
     this.callTimer.clear()
     this.calls.forEach(({ reject }) => reject(new CallTerminated()))
     this.calls.clear()
+
+    if (this.consumerTag) {
+      await this.amqpClient.channel.cancel(this.consumerTag)
+      delete this.consumerTag
+    }
 
     await this.amqpClient.term()
   }
