@@ -41,10 +41,9 @@ export default class AmqpClient {
 
     if (!this.channel) {
       this.channel = await this.connection.createChannel()
+      await this.channel.prefetch(this.prefetchCount, true)
       this.ownChannel = true
     }
-
-    await this.channel.prefetch(this.prefetchCount, true)
 
     this.inited = true
   }

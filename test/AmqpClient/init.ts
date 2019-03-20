@@ -30,6 +30,16 @@ test('[unit] #init reuses a given connection', async t => {
   t.is(t.context.client.connection, connection)
 })
 
+test('[unit] #init reuses a given channel', async t => {
+  const connection = await amqp.connect(AMQP_URL)
+  const channel = await connection.createChannel()
+  t.context.client = new AmqpClient({ channel })
+
+  await t.context.client.init()
+
+  t.is(t.context.client.channel, channel)
+})
+
 test('[unit] #init creates a channel', async t => {
   const connection = await amqp.connect(AMQP_URL)
   t.context.client = new AmqpClient({ connection })
