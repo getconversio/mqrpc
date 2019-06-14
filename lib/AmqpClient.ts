@@ -11,8 +11,8 @@ export interface AmqpClientOptions {
 export default class AmqpClient {
   amqpUrl?: string
   socketOptions?: object
-  connection: amqp.Connection
-  channel: amqp.Channel
+  connection!: amqp.Connection
+  channel!: amqp.Channel
   prefetchCount = 100
 
   protected ownConnection = false

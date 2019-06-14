@@ -69,7 +69,9 @@ export default class RpcServer {
 
     const { consumerTag } = await this.amqpClient.channel.consume(
       `${this.rpcExchangeName}.call`,
-      async (message: Message) => {
+      async (message: Message | null) => {
+        if (!message) return
+
         let content: ClientPayload
 
         try {

@@ -34,19 +34,19 @@
     "@types/loglevel": "^1.5.1",
     "@types/sinon": "^2.3.5",
     "@types/uuid": "^3.4.2",
-    "ava": "^0.22.0",
+    "ava": "^0.25.0",
     "should": "^13.1.0",
     "sinon": "^4.0.1",
     "tslint": "^5.8.0",
-    "typescript": "^2.5.3"
+    "typescript": "^3.4.5"
   },
   "scripts": {
-    "build": "tsc --declaration && npm run lint && ava",
+    "build": "node_modules/.bin/tsc --declaration && yarn run lint && node_modules/.bin/ava",
     "clean": "rm -r dist/ || mkdir dist",
-    "dev": "tsc -w & ava -w",
+    "dev": "node_modules/.bin/tsc -w & node_modules/.bin/ava -w",
     "lint": "node_modules/.bin/tslint -p .",
-    "test": "tsc && ava",
-    "prepublish": "npm run clean && npm run build"
+    "test": "node_modules/.bin/tsc && node_modules/.bin/ava",
+    "prepublish": "yarn run clean && yarn run build"
   },
   "ava": {
     "files": [

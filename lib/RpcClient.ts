@@ -181,8 +181,10 @@ export default class RpcClient {
     return { procedure, args, timeouts }
   }
 
-  protected makeReplyHandler(): (message: amqp.Message) => any {
-    return (message: amqp.Message) => {
+  protected makeReplyHandler(): (message: amqp.Message | null) => any {
+    return (message: amqp.Message | null) => {
+      if (!message) return // beats me, but it's in the type definition 🤷‍♂️
+
       const correlationId = message.properties.correlationId
       const callbacks = this.calls.get(correlationId)
 
