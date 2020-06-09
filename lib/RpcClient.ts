@@ -13,6 +13,7 @@ export interface RpcOptions {
   idleTimeout?: number
   callTimeout?: number
   logger?: StandardLogger
+  persistentMessages?: boolean
 }
 
 export interface RpcClientOptions {
@@ -32,6 +33,7 @@ export default class RpcClient {
   idleTimeout = 0
   callTimeout = 900000 // 15 minutes
   log = logger as StandardLogger
+  persistentMessages = false
 
   protected calls: Map<string, PromiseCallbacks>
   protected callTimer: Timer
@@ -57,6 +59,8 @@ export default class RpcClient {
    *                                                             infinite (0).
    * @param {number}            [opts.rpcClient.callTimeout]     In ms, how long overall to wait for a call's return.
    *                                                             Default 15 minutes.
+   * @param {boolean}           [opts.rpcClient.persistentMessages] Whether to use persistent messages.
+   *                                                             Default false.
    * @param {StandardLogger}    [opts.rpcClient.logger]          Custom logger for client use.
    */
   constructor(opts: RpcClientOptions) {
@@ -69,6 +73,7 @@ export default class RpcClient {
       if (opts.rpcClient.idleTimeout) this.idleTimeout = opts.rpcClient.idleTimeout
       if (opts.rpcClient.callTimeout) this.callTimeout = opts.rpcClient.callTimeout
       if (opts.rpcClient.logger) this.log = opts.rpcClient.logger
+      if (typeof opts.rpcClient.persistentMessages !== 'undefined') this.persistentMessages = opts.rpcClient.persistentMessages
     }
 
     this.callTimer = new Timer()
@@ -152,7 +157,7 @@ export default class RpcClient {
       this.rpcExchangeName,
       'call',
       new Buffer(JSON.stringify(this.callPayload(procedure, ...args))),
-      { replyTo: 'amq.rabbitmq.reply-to', correlationId }
+      { persistent: this.persistentMessages, replyTo: 'amq.rabbitmq.reply-to', correlationId }
     )
 
     try {

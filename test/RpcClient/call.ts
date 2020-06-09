@@ -41,7 +41,7 @@ test('[unit] #call publishes the procedure call', async t => {
     'mqrpc',
     'call',
     sinon.match(buffer => buffer.toString() === payload),
-    { replyTo: 'amq.rabbitmq.reply-to', correlationId: sinon.match.string }
+    { persistent: false, replyTo: 'amq.rabbitmq.reply-to', correlationId: sinon.match.string }
   )
   t.pass()
 })

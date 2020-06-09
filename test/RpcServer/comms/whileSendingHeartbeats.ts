@@ -9,7 +9,7 @@ const fakeMessage = { properties: { replyTo: 1234, correlationId: '12345' } } as
 const expectMessage = (mock, type, times = 1) => {
   mock.expects('publish')
     .exactly(times)
-    .withExactArgs('', 1234, new Buffer(JSON.stringify({ type })), { correlationId: '12345' })
+    .withExactArgs('', 1234, new Buffer(JSON.stringify({ type })), { correlationId: '12345', deliveryMode: undefined })
     .resolves()
 }
 

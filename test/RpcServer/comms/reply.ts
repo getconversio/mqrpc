@@ -34,7 +34,7 @@ test.serial('[unit] #reply publishes to the given replyTo with the given correla
   await reply(amqpClient.channel, sampleMessage)
 
   sinon.assert.calledWith(
-    spy, '', 'amqp.rabbitmq.reply-to', sinon.match.any, { correlationId: '123456' }
+    spy, '', 'amqp.rabbitmq.reply-to', sinon.match.any, { correlationId: '123456', deliveryMode: undefined }
   )
   t.pass()
 })
