@@ -73,7 +73,9 @@ export default class RpcClient {
       if (opts.rpcClient.idleTimeout) this.idleTimeout = opts.rpcClient.idleTimeout
       if (opts.rpcClient.callTimeout) this.callTimeout = opts.rpcClient.callTimeout
       if (opts.rpcClient.logger) this.log = opts.rpcClient.logger
-      if (typeof opts.rpcClient.persistentMessages !== 'undefined') this.persistentMessages = opts.rpcClient.persistentMessages
+      if (typeof opts.rpcClient.persistentMessages !== 'undefined') {
+        this.persistentMessages = opts.rpcClient.persistentMessages
+      }
     }
 
     this.callTimer = new Timer()
