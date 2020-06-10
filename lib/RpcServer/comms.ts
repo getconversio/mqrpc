@@ -12,12 +12,12 @@ import { ClientPayload, TimeoutDesc } from '../common'
  * @param {object}  messageProps The `properties` key of the client's message.
  * @param {object}  response     The object to publish as a response.
  */
-const sendMessage = async (channel: Channel, { replyTo, correlationId }: any, response: object) => {
+const sendMessage = async (channel: Channel, { replyTo, correlationId, deliveryMode }: any, response: object) => {
   await channel.publish(
     '',
     replyTo,
     new Buffer(JSON.stringify(response)),
-    { correlationId }
+    { deliveryMode, correlationId }
   )
 }
 
